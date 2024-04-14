@@ -1,0 +1,30 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Build Docker image
+      run: docker build -t devuxx/wisecow .
+
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u devuxx --password-stdin
+
+    - name: Push Docker image
+      run: docker devuxx/wisecow
+
+    - name: Deploy to Kubernetes
+      run: kubectl apply -f deployment.yaml
+      run: kubectl apply -f service.yaml
+      
+      env:
+        KUBECONFIG: ${{ secrets.KUBE_CONFIG_DATA }}
