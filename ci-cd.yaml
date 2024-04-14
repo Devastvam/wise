@@ -1,0 +1,37 @@
+name: Build and Deploy Wisecow App
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - run: docker build . --tag devuxx/wisecow-app:latest
+
+    - run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username devuxx --password-stdin
+
+    - run: docker push devuxx/wisecow-app:latest
+
+    - uses: azure/setup-kubectl@v1
+
+    - run: |
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
+
+    - run: kubectl rollout status deployment/wisecow-deployment
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - run: echo "${{ secrets.KUBECONFIG }}" | base64 --decode > $HOME/.kube/config
+
+    - run: kubectl rollout restart deployment/wisecow-deployment
