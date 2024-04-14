@@ -1,0 +1,24 @@
+import requests
+
+def check_app_health(url, expected_status_code=200):
+  response = requests.get(url)
+  try:
+    response.raise_for_status()
+    return True, f"Application is up and healthy (status code: {response.status_code})"
+  except requests.exceptions.RequestException as e:
+    return False, f"Application is down or unreachable: {str(e)}"
+  except requests.exceptions.HTTPError as e:
+    return False, f"Application is up but not healthy (status code: {e.response.status_code})"
+
+url = input("Enter the URL of the application to check (e.g., https://www.example.com): ")
+if not url.startswith("http"):
+  print("Invalid URL. Please enter a URL starting with http:// or https://")
+  exit()
+
+is_up, message = check_app_health(url)
+
+if is_up:
+  print(message)
+else:
+  print(message)
+
